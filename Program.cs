@@ -1,97 +1,58 @@
-﻿
-namespace BankingSystemCLI
+﻿using System;
+
+
+
+
+namespace BANKINGSYSTEMCLI
 {
-
-    public class User
+    class Result<T>
     {
+        public bool isSuccess {get; set; }
+        public T Data {get; set;} 
 
-        public string FirstName { get; set; }
-        public string LastName { get; set; }
-        public string Email { get; set; }
+        public string Message {get; set; }
 
-        private string _userPassword { get; set; }
-        public User(string firstName, string lastName, string email, string password)
-        {
+        public static Result<T> Success(T data, string msg) => new Result<T> { isSuccess = true, Data = data, Message = msg};
+        public static Result<T> Failure(string msg) => new Result<T> { isSuccess = false, Message = msg };
+    }
 
-            this.FirstName = firstName;
-            this.LastName = lastName;
-            this.Email = email;
-            this._userPassword = password;
-        }
-        public bool VerifyPassword(string attemptedPassword)
-        {
-            return attemptedPassword == this._userPassword;
-        }
+    public class UserEntity
+    {
+        public string Names{get; set;}
+        public string Email{get; set;}
 
+        public string Password {get; set;}
+    }
+
+    public class UserDto
+    {
+        public string Names {get; set;}
+        public string Email {get; set; }
     }
 
 
-    class Program
+    class UserService
     {
-        public static void Main(string[] args)
+
+        private readonly List<UserEntity> _userDB = new List<UserEntity>();
+        
+        public Result<UserDto> Register(string names, string email, string password)
         {
-            UserService service = new UserService();
-            Console.WriteLine(@"Hello this are Options to use this System
-            1. Creating a new User
-            2. Login User
-            3. Get All Users
-            4. Exiting the progrm");
-
-            bool isRunning = true;
-
-            while (isRunning)
-
+            if(string.IsNullOrEmpty(email))
             {
-                Console.WriteLine("Enter Your Choice here: ");
-                string choice = Console.ReadLine();
-
-                switch (choice)
-                {
-                    case "1":
-                        Console.WriteLine("Creating an account");
-                        Console.WriteLine("");
-
-                        Console.Write("First name: ");
-                        String firstName = Console.ReadLine();
-
-                        Console.Write("Second Name: ");
-                        String lastName = Console.ReadLine();
-
-                        Console.Write("Email: ");
-                        String email = Console.ReadLine();
-
-                        Console.Write("Password: ");
-                        String password = Console.ReadLine();
-
-                        service.RegisterUser(firstName, lastName, email, password);
-                        break;
-                    
-                    case "2":
-                        Console.Write("Email: ");
-                        string loginEmail = Console.ReadLine();
-
-                        Console.Write("Password: ");
-                        string loginPassword = Console.ReadLine();
-
-                        bool loginSuccess = service.LoginUser(loginEmail, loginPassword);
-                        break;
-
-                    case "3":
-                    var users = service.GetAllUsers();
-                    Console.WriteLine("\nRegistered Users:");
-                    foreach (var user in users)
-                    {
-                        Console.WriteLine($"- {user.FirstName} {user.LastName} ({user.Email})");
-                    }
-                    break;
-                    case "4":
-                        Console.WriteLine("Exiting the Program .............");
-                        isRunning = false;
-                        break;
-
-                }
+                return Result<UserDto>.Failure("Email is required");
             }
-        }
-    }
 
+            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(password);
+
+            var newUser = new UserEntity {Names = names, Email = email, Password = hashedPassword};
+            _userDB.Add(newUser);
+
+            var response = new UserDto {Names = newUser.Names, Email = newUser.Email};
+
+            return Result<UserDto>.Success(response, "User created well");
+        }
+
+        
+    }
 }
