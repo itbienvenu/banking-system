@@ -39,57 +39,7 @@ namespace BANKINGSYSTEMCLI
         public UserDto UserData {get; set; }
     }
 
-    class UserService
-    {
-
-        private readonly List<UserEntity> _userDB = new List<UserEntity>();
-        
-        public Result<UserDto> Register(string names, string email, string password)
-        {
-            if(string.IsNullOrEmpty(email))
-            {
-                return Result<UserDto>.Failure("Email is required");
-            }
-
-            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(password);
-
-            long userAccountNUmber =  Random.Shared.NextInt64(111111111111L, 999999999999L);
-
-            var newUser = new UserEntity {Names = names, Email = email, Password = hashedPassword, AccountNUmber = userAccountNUmber};
-            _userDB.Add(newUser);
-
-            var response = new UserDto {Names = newUser.Names, Email = newUser.Email};
-
-            return Result<UserDto>.Success(response, "User created well");
-        }
-
-        public Result<LoginResponse> Login(string email, string password)
-        {
-            if(string.IsNullOrEmpty(email) && string.IsNullOrEmpty(password))
-            {
-                return Result<LoginResponse>.Failure("Email or password are required");
-            }
-
-            foreach(UserEntity user in _userDB)
-            {
-                if(BCrypt.Net.BCrypt.Verify(password, user.Password))
-                {
-                    if(user.Email == email)
-                    {
-                        var response = new LoginResponse { UserData = new UserDto { Names = user.Names, Email = user.Email } };
-                        return Result<LoginResponse>.Success(response, "Login successful");
-                    }
-                    return Result<LoginResponse>.Failure("Invalid email or password");
-                }
-            }
-
-            return Result<LoginResponse>.Failure("Invalid email or password");
-        }
-
-
-        
-    }
-
+    
     // Testing the API
 
     public class Program
@@ -131,7 +81,7 @@ namespace BANKINGSYSTEMCLI
                         string loginPassword = Console.ReadLine();
 
                         var res = userService.Login(loginEmail, loginPassword);
-                        Console.WriteLine(res.Message, res.Data);
+                        Console.WriteLine(res.Message, res.Data.Token);
                         break;
                     case 3:
                         isRunnig = false;
